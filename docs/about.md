@@ -1,3 +1,8 @@
+---
+title: About
+description: About OPAL and its creator, Mostafa Mansour.
+---
+
 # About
 
 OPAL is built by **Mostafa Mansour**, a Technical Lead and Senior Software Engineer.
