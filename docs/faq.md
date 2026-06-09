@@ -35,7 +35,7 @@ Click **Get Pro · $149** on the homepage. Payment is processed by Gumroad. You 
 
 ### Can I get a refund?
 
-Yes — within 30 days of purchase, no questions asked. Email [contact@opalapi.dev](mailto:contact@opalapi.dev) with your Gumroad order number.
+Yes — within 30 days of purchase, no questions asked. Email [contact@opalapi.dev](mailto:contact@opalapi.dev) with your order number.
 
 ---
 
