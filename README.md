@@ -68,7 +68,11 @@ Pro tier: requires a valid Pro license key purchased at [opalapi.dev](https://op
 
 ---
 
+## Links
+
+[Features](https://opalapi.dev/features) · [Download](https://opalapi.dev/download) · [Pricing](https://opalapi.dev/pricing) · [User Guide](https://opalapi.dev/guide) · [Install](https://opalapi.dev/install) · [Blog](https://opalapi.dev/blog) · [FAQ](https://opalapi.dev/faq) · [Security](https://opalapi.dev/security) · [Privacy](https://opalapi.dev/privacy) · [Terms](https://opalapi.dev/terms) · [Refunds](https://opalapi.dev/refund) · [Notices](https://opalapi.dev/notices)
+
 ## Contact
 
 Website: [opalapi.dev](https://opalapi.dev)  
-Support: contact@opalapi.dev
+Support: [contact@opalapi.dev](mailto:contact@opalapi.dev)
