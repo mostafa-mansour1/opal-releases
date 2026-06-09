@@ -45,7 +45,7 @@ Works completely offline. No Oracle instance required to explore the catalog.
 | Export & backup | — | ✓ |
 | All future updates | — | ✓ |
 
-[Get Pro →](https://mostafa-mansour1.gumroad.com/l/opal-pro)
+[Get Pro →](https://opalapi.dev/pricing)
 
 No subscription. No seat fees. No renewal.
 
