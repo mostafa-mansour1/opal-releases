@@ -1,0 +1,59 @@
+name: Release
+
+# One button to release OPAL.
+#
+# patch  → draft release (hidden from public; share with testers manually)
+#           Replaces the previous patch draft — always one draft at a time.
+# minor  → published release (goes live immediately)
+# major  → published release (goes live immediately)
+#
+# Uncheck platforms to build only what you need (useful for patch test builds).
+# After a minor/major release, run `npm run sign:win` locally to sign Windows.
+#
+# Builds run in the private repo's reusable pipeline.
+# Compute is billed to this public repo → free unlimited minutes.
+#
+# Required secrets (set in this repo's Settings → Secrets):
+#   PRIVATE_REPO_PAT  — PAT with read+write access to mostafa-mansour1/opal
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      mac:
+        description: "Build macOS (arm64 + x64)"
+        type: boolean
+        default: true
+      windows:
+        description: "Build Windows (x64)"
+        type: boolean
+        default: true
+      linux:
+        description: "Build Linux (x64)"
+        type: boolean
+        default: true
+      portable:
+        description: "Build portable ZIP (Windows)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  pipeline:
+    uses: mostafa-mansour1/opal/.github/workflows/_pipeline.yml@main
+    with:
+      bump: ${{ inputs.bump }}
+      mac: ${{ inputs.mac }}
+      windows: ${{ inputs.windows }}
+      linux: ${{ inputs.linux }}
+      portable: ${{ inputs.portable }}
+    secrets: inherit
