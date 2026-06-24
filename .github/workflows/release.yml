@@ -305,7 +305,7 @@ jobs:
         run: npm install && npm install --prefix frontend
 
       - name: Build
-        run: bash scripts/build-portable.sh --skip-checks --platform all --platform win
+        run: bash scripts/build-portable.sh --skip-checks --platform all
 
       - uses: actions/upload-artifact@v4
         with:
@@ -341,6 +341,7 @@ jobs:
           mv "OPAL Setup ${VERSION}.exe"    "OPAL-Setup.exe"    2>/dev/null || true
           mv "OPAL-${VERSION}.AppImage"     "OPAL-x64.AppImage" 2>/dev/null || true
           mv "opal_${VERSION}_amd64.deb"    "OPAL-amd64.deb"    2>/dev/null || true
+          mv "OPAL-portable-all.zip"        "OPAL-portable.zip" 2>/dev/null || true
           ls -lh
 
       - name: Delete previous draft release
