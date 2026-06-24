@@ -267,7 +267,9 @@ jobs:
             frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm install && npm install --prefix frontend
+        run: |
+          npm install && npm install --prefix frontend
+          pip install cryptography --quiet
 
       - name: Build
         run: bash scripts/build-portable.sh --skip-checks --platform all
