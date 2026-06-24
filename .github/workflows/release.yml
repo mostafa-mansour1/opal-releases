@@ -305,7 +305,7 @@ jobs:
         run: npm install && npm install --prefix frontend
 
       - name: Build
-        run: bash scripts/build-portable.sh --skip-checks
+        run: bash scripts/build-portable.sh --skip-checks --platform win
 
       - uses: actions/upload-artifact@v4
         with:
