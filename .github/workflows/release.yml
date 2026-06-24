@@ -347,16 +347,15 @@ jobs:
 
       - name: Rename to version-less filenames
         run: |
-          VERSION="${{ needs.version.outputs.version }}"
           mkdir -p artifacts
           cd artifacts
-          mv "OPAL-${VERSION}-arm64.dmg"    "OPAL-arm64.dmg"    2>/dev/null || true
-          mv "OPAL-${VERSION}-arm64.zip"    "OPAL-arm64.zip"    2>/dev/null || true
-          mv "OPAL-${VERSION}-x64.dmg"      "OPAL-x64.dmg"      2>/dev/null || true
-          mv "OPAL-${VERSION}-x64.zip"      "OPAL-x64.zip"      2>/dev/null || true
-          mv "OPAL Setup ${VERSION}.exe"    "OPAL-Setup.exe"    2>/dev/null || true
-          mv "OPAL-${VERSION}.AppImage"     "OPAL-x64.AppImage" 2>/dev/null || true
-          mv "opal_${VERSION}_amd64.deb"    "OPAL-amd64.deb"    2>/dev/null || true
+          for f in OPAL-*-arm64.dmg;   do mv "$f" "OPAL-arm64.dmg"    2>/dev/null || true; done
+          for f in OPAL-*-arm64.zip;   do mv "$f" "OPAL-arm64.zip"    2>/dev/null || true; done
+          for f in OPAL-*-x64.dmg;     do mv "$f" "OPAL-x64.dmg"      2>/dev/null || true; done
+          for f in OPAL-*-x64.zip;     do mv "$f" "OPAL-x64.zip"      2>/dev/null || true; done
+          for f in "OPAL Setup "*.exe; do mv "$f" "OPAL-Setup.exe"    2>/dev/null || true; done
+          for f in OPAL-*.AppImage;    do mv "$f" "OPAL-x64.AppImage" 2>/dev/null || true; done
+          for f in opal_*_amd64.deb;   do mv "$f" "OPAL-amd64.deb"    2>/dev/null || true; done
           mv "OPAL-portable-all.zip"        "OPAL-portable.zip" 2>/dev/null || true
           ls -lh
 
