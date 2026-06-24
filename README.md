@@ -6,6 +6,8 @@
 
 ## Download
 
+### Native installers
+
 | Platform | File |
 |---|---|
 | macOS Apple Silicon (M1–M4) | [OPAL-arm64.dmg](https://github.com/mostafa-mansour1/opal-releases/releases/latest/download/OPAL-arm64.dmg) · [.zip](https://github.com/mostafa-mansour1/opal-releases/releases/latest/download/OPAL-arm64.zip) |
@@ -13,7 +15,22 @@
 | Windows 10/11 64-bit | [OPAL-Setup.exe](https://github.com/mostafa-mansour1/opal-releases/releases/latest/download/OPAL-Setup.exe) |
 | Linux x64 | [OPAL-x64.AppImage](https://github.com/mostafa-mansour1/opal-releases/releases/latest/download/OPAL-x64.AppImage) · [.deb](https://github.com/mostafa-mansour1/opal-releases/releases/latest/download/OPAL-amd64.deb) |
 
+### Portable version (all platforms)
+
+| File | Description |
+|---|---|
+| [OPAL-portable.zip](https://github.com/mostafa-mansour1/opal-releases/releases/latest/download/OPAL-portable.zip) | No installation or admin rights needed. Works on macOS, Windows, and Linux. Extract and run. |
+
+The portable version bundles Python and all dependencies. Extract the ZIP, then run `start.bat` (Windows) or `start.sh` (macOS / Linux). Your data is stored inside the extracted folder.
+
+See the [portable version guide](https://opalapi.dev/blog/opal-portable-version) for setup instructions and troubleshooting.
+
+Latest release: [github.com/mostafa-mansour1/opal-releases/releases/latest](https://github.com/mostafa-mansour1/opal-releases/releases/latest)  
 All releases: [github.com/mostafa-mansour1/opal-releases/releases](https://github.com/mostafa-mansour1/opal-releases/releases)
+
+**Having trouble installing?**  
+→ [Installation guide](https://opalapi.dev/install) — macOS Gatekeeper, Windows SmartScreen, Linux AppImage  
+→ [Portable version guide](https://opalapi.dev/blog/opal-portable-version) — no install, no admin rights needed
 
 ---
 
