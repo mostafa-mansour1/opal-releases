@@ -8,13 +8,13 @@ name: Release
 # major  → published release (goes live immediately)
 #
 # Uncheck platforms to build only what you need (useful for patch test builds).
-# After a minor/major release, run `npm run sign:win` locally to sign Windows.
 #
-# Builds run in the private repo's reusable pipeline.
-# Compute is billed to this public repo → free unlimited minutes.
+# All jobs run here (public repo = free unlimited minutes).
+# Source code is checked out from the private repo via PRIVATE_REPO_PAT —
+# it is never committed or pushed here.
 #
 # Required secrets (set in this repo's Settings → Secrets):
-#   PRIVATE_REPO_PAT  — PAT with read+write access to mostafa-mansour1/opal
+#   PRIVATE_REPO_PAT  — PAT with read access to mostafa-mansour1/opal
 
 on:
   workflow_dispatch:
@@ -47,13 +47,363 @@ on:
 permissions:
   contents: write
 
+env:
+  PUBLIC_REPO: mostafa-mansour1/opal-releases
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+# ── Job 1: Code quality checks ────────────────────────────────────────────────
 jobs:
-  pipeline:
-    uses: mostafa-mansour1/opal/.github/workflows/_pipeline.yml@main
-    with:
-      bump: ${{ inputs.bump }}
-      mac: ${{ inputs.mac }}
-      windows: ${{ inputs.windows }}
-      linux: ${{ inputs.linux }}
-      portable: ${{ inputs.portable }}
-    secrets: inherit
+  checks:
+    name: Code quality checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mostafa-mansour1/opal
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm install && npm install --prefix frontend
+
+      - name: Prettier format check
+        run: npm run format:check
+
+      - name: TypeScript check
+        run: cd frontend && npx tsc --noEmit
+
+      - name: ESLint
+        run: cd frontend && npx eslint src/
+
+# ── Job 2: Resolve version tag ────────────────────────────────────────────────
+#   The tag was already pushed by the local release script.
+#   Read package.json to expose the version to build jobs.
+  version:
+    name: Resolve version tag
+    needs: checks
+    runs-on: ubuntu-latest
+    outputs:
+      version:  ${{ steps.read.outputs.version }}
+      tag:      ${{ steps.read.outputs.tag }}
+      is_patch: ${{ steps.read.outputs.is_patch }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mostafa-mansour1/opal
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Read version
+        id: read
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v${VERSION}"
+          IS_PATCH="false"
+          [[ "${{ inputs.bump }}" == "patch" ]] && IS_PATCH="true"
+          echo "version=${VERSION}"     >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}"             >> "$GITHUB_OUTPUT"
+          echo "is_patch=${IS_PATCH}"   >> "$GITHUB_OUTPUT"
+
+# ── Jobs 3–6: Build platforms in parallel ─────────────────────────────────────
+  build-mac:
+    name: Build macOS (${{ matrix.arch }})
+    needs: version
+    if: ${{ inputs.mac != false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mostafa-mansour1/opal
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+          ref: ${{ needs.version.outputs.tag }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install --prefix frontend
+          python3 -m venv backend/.venv
+          backend/.venv/bin/pip install -r backend/requirements.txt pyinstaller
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/electron-builder
+          key: electron-builder-mac-${{ matrix.arch }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: electron-builder-mac-${{ matrix.arch }}-
+
+      - name: Build
+        run: bash scripts/build-mac.sh --arch ${{ matrix.arch }} --skip-checks
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-mac-${{ matrix.arch }}
+          path: |
+            dist/installers/*.dmg
+            dist/installers/*.zip
+          if-no-files-found: error
+          retention-days: 1
+
+  build-win:
+    name: Build Windows (x64)
+    needs: version
+    if: ${{ inputs.windows != false }}
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mostafa-mansour1/opal
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+          ref: ${{ needs.version.outputs.tag }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          npm install
+          npm install --prefix frontend
+          python -m venv backend/.venv
+          backend/.venv/Scripts/pip install -r backend/requirements.txt pyinstaller
+
+      - uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\electron-builder\Cache
+          key: electron-builder-win-${{ hashFiles('package-lock.json') }}
+          restore-keys: electron-builder-win-
+
+      - name: Build
+        shell: bash
+        run: bash scripts/build-win.sh --skip-checks
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-win-x64
+          path: dist/installers/*.exe
+          if-no-files-found: error
+          retention-days: 1
+
+  build-linux:
+    name: Build Linux (x64)
+    needs: version
+    if: ${{ inputs.linux != false }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mostafa-mansour1/opal
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+          ref: ${{ needs.version.outputs.tag }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install --prefix frontend
+          python3 -m venv backend/.venv
+          backend/.venv/bin/pip install -r backend/requirements.txt pyinstaller
+          sudo apt-get install -y fakeroot
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/electron-builder
+          key: electron-builder-linux-${{ hashFiles('package-lock.json') }}
+          restore-keys: electron-builder-linux-
+
+      - name: Build
+        run: bash scripts/build-linux.sh --skip-checks
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-linux-x64
+          path: |
+            dist/installers/*.AppImage
+            dist/installers/*.deb
+          if-no-files-found: error
+          retention-days: 1
+
+  build-portable:
+    name: Build portable ZIP (Windows)
+    needs: version
+    if: ${{ inputs.portable != false }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mostafa-mansour1/opal
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+          ref: ${{ needs.version.outputs.tag }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm install && npm install --prefix frontend
+
+      - name: Build
+        run: bash scripts/build-portable.sh --skip-checks
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: portable-zip
+          path: dist/OPAL-portable.zip
+          if-no-files-found: error
+          retention-days: 1
+
+# ── Job 7: Publish release ────────────────────────────────────────────────────
+  publish:
+    name: Publish release
+    needs: [version, build-mac, build-win, build-linux, build-portable]
+    if: ${{ always() && needs.version.result == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: Rename to version-less filenames
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          mkdir -p artifacts
+          cd artifacts
+          mv "OPAL-${VERSION}-arm64.dmg"    "OPAL-arm64.dmg"    2>/dev/null || true
+          mv "OPAL-${VERSION}-arm64.zip"    "OPAL-arm64.zip"    2>/dev/null || true
+          mv "OPAL-${VERSION}-x64.dmg"      "OPAL-x64.dmg"      2>/dev/null || true
+          mv "OPAL-${VERSION}-x64.zip"      "OPAL-x64.zip"      2>/dev/null || true
+          mv "OPAL Setup ${VERSION}.exe"    "OPAL-Setup.exe"    2>/dev/null || true
+          mv "OPAL-${VERSION}.AppImage"     "OPAL-x64.AppImage" 2>/dev/null || true
+          mv "opal_${VERSION}_amd64.deb"    "OPAL-amd64.deb"    2>/dev/null || true
+          ls -lh
+
+      - name: Delete previous draft release
+        if: ${{ needs.version.outputs.is_patch == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list \
+            --repo "$PUBLIC_REPO" \
+            --json tagName,isDraft \
+            --limit 20 \
+          | jq -r '.[] | select(.isDraft) | .tagName' \
+          | while read -r old_tag; do
+              echo "Deleting old draft: $old_tag"
+              gh release delete "$old_tag" --repo "$PUBLIC_REPO" --yes 2>/dev/null || true
+            done
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ needs.version.outputs.tag }}"
+          IS_PATCH="${{ needs.version.outputs.is_patch }}"
+
+          NOTES_FILE=$(mktemp)
+          if [[ "$IS_PATCH" == "true" ]]; then
+            DRAFT_FLAG="--draft"
+            printf '%s\n' \
+              '**Test build — not public.** Share with testers directly.' \
+              '' \
+              '| Platform | File |' \
+              '|---|---|' \
+              '| macOS Apple Silicon | `OPAL-arm64.dmg` |' \
+              '| macOS Intel | `OPAL-x64.dmg` |' \
+              '| Windows 64-bit | `OPAL-Setup.exe` (unsigned) |' \
+              '| Windows portable | `OPAL-portable.zip` |' \
+              '| Linux x64 | `OPAL-x64.AppImage` · `OPAL-amd64.deb` |' \
+              > "$NOTES_FILE"
+          else
+            DRAFT_FLAG=""
+            printf '%s\n' \
+              "OPAL ${TAG}" \
+              '' \
+              '| Platform | File |' \
+              '|---|---|' \
+              '| macOS Apple Silicon | `OPAL-arm64.dmg` |' \
+              '| macOS Intel | `OPAL-x64.dmg` |' \
+              '| Windows 64-bit | `OPAL-Setup.exe` |' \
+              '| Windows portable | `OPAL-portable.zip` |' \
+              '| Linux x64 | `OPAL-x64.AppImage` · `OPAL-amd64.deb` |' \
+              '' \
+              'Full details at [opalapi.dev](https://opalapi.dev)' \
+              > "$NOTES_FILE"
+          fi
+
+          shopt -s nullglob
+          ASSET_FILES=(artifacts/*)
+
+          gh release create "$TAG" \
+            $DRAFT_FLAG \
+            --repo "$PUBLIC_REPO" \
+            --title "OPAL ${TAG}" \
+            --notes-file "$NOTES_FILE" \
+            "${ASSET_FILES[@]}"
+
+          rm -f "$NOTES_FILE"
