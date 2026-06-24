@@ -7,14 +7,16 @@ name: Release
 # minor  → published release (goes live immediately)
 # major  → published release (goes live immediately)
 #
-# Uncheck platforms to build only what you need (useful for patch test builds).
+# Version is bumped, committed, and tagged ONLY after all builds pass.
+# A failed build wastes no version number.
 #
 # All jobs run here (public repo = free unlimited minutes).
 # Source code is checked out from the private repo via PRIVATE_REPO_PAT —
 # it is never committed or pushed here.
 #
 # Required secrets (set in this repo's Settings → Secrets):
-#   PRIVATE_REPO_PAT  — PAT with read access to mostafa-mansour1/opal
+#   PRIVATE_REPO_PAT  — fine-grained PAT on mostafa-mansour1/opal
+#                       Permissions: Contents (read & write), Metadata (read)
 
 on:
   workflow_dispatch:
@@ -40,7 +42,7 @@ on:
         type: boolean
         default: true
       portable:
-        description: "Build portable ZIP (Windows)"
+        description: "Build portable ZIP (all platforms)"
         type: boolean
         default: true
 
@@ -83,43 +85,10 @@ jobs:
       - name: ESLint
         run: cd frontend && npx eslint src/
 
-# ── Job 2: Resolve version tag ────────────────────────────────────────────────
-#   The tag was already pushed by the local release script.
-#   Read package.json to expose the version to build jobs.
-  version:
-    name: Resolve version tag
-    needs: checks
-    runs-on: ubuntu-latest
-    outputs:
-      version:  ${{ steps.read.outputs.version }}
-      tag:      ${{ steps.read.outputs.tag }}
-      is_patch: ${{ steps.read.outputs.is_patch }}
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: mostafa-mansour1/opal
-          token: ${{ secrets.PRIVATE_REPO_PAT }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Read version
-        id: read
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          TAG="v${VERSION}"
-          IS_PATCH="false"
-          [[ "${{ inputs.bump }}" == "patch" ]] && IS_PATCH="true"
-          echo "version=${VERSION}"     >> "$GITHUB_OUTPUT"
-          echo "tag=${TAG}"             >> "$GITHUB_OUTPUT"
-          echo "is_patch=${IS_PATCH}"   >> "$GITHUB_OUTPUT"
-
-# ── Jobs 3–6: Build platforms in parallel ─────────────────────────────────────
+# ── Jobs 2–5: Build platforms in parallel (after checks) ──────────────────────
   build-mac:
     name: Build macOS (${{ matrix.arch }})
-    needs: version
+    needs: checks
     if: ${{ inputs.mac != false }}
     strategy:
       fail-fast: false
@@ -136,7 +105,6 @@ jobs:
         with:
           repository: mostafa-mansour1/opal
           token: ${{ secrets.PRIVATE_REPO_PAT }}
-          ref: ${{ needs.version.outputs.tag }}
 
       - uses: actions/setup-python@v5
         with:
@@ -177,7 +145,7 @@ jobs:
 
   build-win:
     name: Build Windows (x64)
-    needs: version
+    needs: checks
     if: ${{ inputs.windows != false }}
     runs-on: windows-latest
 
@@ -186,7 +154,6 @@ jobs:
         with:
           repository: mostafa-mansour1/opal
           token: ${{ secrets.PRIVATE_REPO_PAT }}
-          ref: ${{ needs.version.outputs.tag }}
 
       - uses: actions/setup-python@v5
         with:
@@ -227,7 +194,7 @@ jobs:
 
   build-linux:
     name: Build Linux (x64)
-    needs: version
+    needs: checks
     if: ${{ inputs.linux != false }}
     runs-on: ubuntu-latest
 
@@ -236,7 +203,6 @@ jobs:
         with:
           repository: mostafa-mansour1/opal
           token: ${{ secrets.PRIVATE_REPO_PAT }}
-          ref: ${{ needs.version.outputs.tag }}
 
       - uses: actions/setup-python@v5
         with:
@@ -278,7 +244,7 @@ jobs:
 
   build-portable:
     name: Build portable ZIP (all platforms)
-    needs: version
+    needs: checks
     if: ${{ inputs.portable != false }}
     runs-on: ubuntu-latest
 
@@ -287,7 +253,6 @@ jobs:
         with:
           repository: mostafa-mansour1/opal
           token: ${{ secrets.PRIVATE_REPO_PAT }}
-          ref: ${{ needs.version.outputs.tag }}
 
       - uses: actions/setup-python@v5
         with:
@@ -314,11 +279,60 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+# ── Job 6: Bump version, commit, tag, push — only after all builds pass ───────
+  version:
+    name: Bump version & tag
+    needs: [build-mac, build-win, build-linux, build-portable]
+    # Run only when every enabled build job succeeded (not skipped = failed)
+    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    runs-on: ubuntu-latest
+    outputs:
+      version:  ${{ steps.bump.outputs.version }}
+      tag:      ${{ steps.bump.outputs.tag }}
+      is_patch: ${{ steps.bump.outputs.is_patch }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mostafa-mansour1/opal
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Bump version, commit, tag, push
+        id: bump
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          npm version "${{ inputs.bump }}" --no-git-tag-version
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v${VERSION}"
+
+          git add package.json package-lock.json
+          git commit -m "chore: release ${TAG}"
+          git tag "${TAG}"
+
+          # Push using PAT embedded in remote URL
+          git remote set-url origin "https://x-access-token:${{ secrets.PRIVATE_REPO_PAT }}@github.com/mostafa-mansour1/opal.git"
+          git push origin main
+          git push origin "${TAG}"
+
+          IS_PATCH="false"
+          [[ "${{ inputs.bump }}" == "patch" ]] && IS_PATCH="true"
+
+          echo "version=${VERSION}"   >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}"           >> "$GITHUB_OUTPUT"
+          echo "is_patch=${IS_PATCH}" >> "$GITHUB_OUTPUT"
+
 # ── Job 7: Publish release ────────────────────────────────────────────────────
   publish:
     name: Publish release
-    needs: [version, build-mac, build-win, build-linux, build-portable]
-    if: ${{ always() && needs.version.result == 'success' }}
+    needs: [version]
+    if: ${{ needs.version.result == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -377,7 +391,7 @@ jobs:
               '| macOS Apple Silicon | `OPAL-arm64.dmg` |' \
               '| macOS Intel | `OPAL-x64.dmg` |' \
               '| Windows 64-bit | `OPAL-Setup.exe` (unsigned) |' \
-              '| Windows portable | `OPAL-portable.zip` |' \
+              '| Portable (all platforms) | `OPAL-portable.zip` |' \
               '| Linux x64 | `OPAL-x64.AppImage` · `OPAL-amd64.deb` |' \
               > "$NOTES_FILE"
           else
@@ -390,7 +404,7 @@ jobs:
               '| macOS Apple Silicon | `OPAL-arm64.dmg` |' \
               '| macOS Intel | `OPAL-x64.dmg` |' \
               '| Windows 64-bit | `OPAL-Setup.exe` |' \
-              '| Windows portable | `OPAL-portable.zip` |' \
+              '| Portable (all platforms) | `OPAL-portable.zip` |' \
               '| Linux x64 | `OPAL-x64.AppImage` · `OPAL-amd64.deb` |' \
               '' \
               'Full details at [opalapi.dev](https://opalapi.dev)' \
