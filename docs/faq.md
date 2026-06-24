@@ -99,6 +99,38 @@ Currently, OPAL supports Basic Auth (username and password). OAuth support is pl
 
 ---
 
+## Downloading and installation
+
+### Which version should I download?
+
+Use the native installer for your platform — it's the simplest option. macOS: pick Apple Silicon (`.dmg`) for M1/M2/M3/M4 Macs, or Intel (`.dmg`) for older Intel Macs. Windows: download `OPAL-Setup.exe`. Linux: AppImage works on most distributions without any installation step. If you're on a managed machine where the installer is blocked, use the [portable version](/download#portable).
+
+### What is the OPAL portable version?
+
+The portable version is a self-contained ZIP archive that runs on macOS, Windows, and Linux with no installation or admin rights needed. Extract it anywhere and run `start.bat` (Windows) or `start.sh` (macOS / Linux). Your data is stored inside the extracted folder, so the app is completely portable. See [How to use the OPAL portable version](/blog/opal-portable-version) for setup instructions and troubleshooting.
+
+### What is the difference between the installer and the portable version?
+
+The native installer integrates with your operating system — it appears in your Applications folder or Start Menu and can auto-update. The portable version is a plain folder: no system-level changes, no admin rights needed, data stays inside the folder. Both versions have the same features. Free and Pro licenses work in both.
+
+### Does the portable version require installation?
+
+No. Extract the ZIP to any folder and run the launcher script. Nothing is written outside that folder.
+
+### Why does OPAL offer a portable version?
+
+Many Oracle Fusion consultants and developers work on enterprise-managed machines where installing software requires admin approval or is blocked by IT policy. The portable version bypasses this entirely — no installer, no SmartScreen prompt, no admin required.
+
+### Where can I find older OPAL releases?
+
+All releases are published at [github.com/mostafa-mansour1/opal-releases/releases](https://github.com/mostafa-mansour1/opal-releases/releases). Each release includes native installers and a portable ZIP for all platforms.
+
+### Windows SmartScreen is blocking the installer
+
+Click **More info → Run anyway**. SmartScreen warns on infrequently-downloaded software. If your machine blocks all unsigned installers, use the [portable version](/download#portable) instead — it requires no system-level install and bypasses SmartScreen entirely.
+
+---
+
 ## Troubleshooting
 
 ### The app won't open on macOS
