@@ -277,7 +277,7 @@ jobs:
           retention-days: 1
 
   build-portable:
-    name: Build portable ZIP (Windows)
+    name: Build portable ZIP (all platforms)
     needs: version
     if: ${{ inputs.portable != false }}
     runs-on: ubuntu-latest
@@ -305,12 +305,12 @@ jobs:
         run: npm install && npm install --prefix frontend
 
       - name: Build
-        run: bash scripts/build-portable.sh --skip-checks --platform win
+        run: bash scripts/build-portable.sh --skip-checks --platform all --platform win
 
       - uses: actions/upload-artifact@v4
         with:
           name: portable-zip
-          path: dist/OPAL-portable.zip
+          path: dist/OPAL-portable-all.zip
           if-no-files-found: error
           retention-days: 1
 
