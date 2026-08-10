@@ -1,6 +1,6 @@
 # OPAL — Oracle Fusion Cloud API Explorer
 
-**OPAL** is an offline-first desktop tool for exploring, building, and testing Oracle Fusion Cloud REST APIs — without an Oracle instance, without a browser, without wrestling with 200MB OpenAPI specs.
+**OPAL** is an offline-first desktop tool for exploring, building, and testing Oracle Fusion Cloud REST APIs (HCM, FSCM, BPM) — without an Oracle instance, without a browser, and without wrestling with 200MB OpenAPI specs. No official Oracle Fusion Postman collection exists; OPAL is a purpose-built alternative that works with no Oracle account required just to browse the catalog.
 
 ---
 
