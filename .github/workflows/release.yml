@@ -95,10 +95,36 @@ jobs:
       - name: ESLint
         run: cd frontend && npx eslint src/
 
-# ── Jobs 2–5: Build platforms in parallel (after checks) ──────────────────────
+# ── Job 1b: Compute next version ──────────────────────────────────────────────
+# Calculated before the builds so each build stamps package.json with the version
+# it will actually ship as. Nothing is committed or tagged here — that still
+# happens only after every build passes, so a failed build wastes no version.
+  next-version:
+    name: Compute next version
+    needs: checks
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.calc.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: mostafa-mansour1/opal
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Calculate
+        id: calc
+        run: |
+          npm version "${{ inputs.bump }}" --no-git-tag-version >/dev/null
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+# ── Jobs 2–5: Build platforms in parallel ─────────────────────────────────────
   build-mac:
     name: Build macOS (${{ matrix.arch }})
-    needs: checks
+    needs: [checks, next-version]
     if: ${{ inputs.mac != false }}
     strategy:
       fail-fast: false
@@ -127,6 +153,9 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             frontend/package-lock.json
+
+      - name: Stamp release version
+        run: npm version "${{ needs.next-version.outputs.version }}" --no-git-tag-version --allow-same-version
 
       - name: Install dependencies
         run: |
@@ -164,7 +193,7 @@ jobs:
 
   build-win:
     name: Build Windows (x64)
-    needs: checks
+    needs: [checks, next-version]
     if: ${{ inputs.windows != false }}
     runs-on: windows-latest
 
@@ -185,6 +214,9 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             frontend/package-lock.json
+
+      - name: Stamp release version
+        run: npm version "${{ needs.next-version.outputs.version }}" --no-git-tag-version --allow-same-version
 
       - name: Install dependencies
         shell: bash
@@ -213,7 +245,7 @@ jobs:
 
   build-linux:
     name: Build Linux (x64)
-    needs: checks
+    needs: [checks, next-version]
     if: ${{ inputs.linux != false }}
     runs-on: ubuntu-latest
 
@@ -234,6 +266,9 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             frontend/package-lock.json
+
+      - name: Stamp release version
+        run: npm version "${{ needs.next-version.outputs.version }}" --no-git-tag-version --allow-same-version
 
       - name: Install dependencies
         run: |
@@ -263,7 +298,7 @@ jobs:
 
   build-portable:
     name: Build portable ZIP (all platforms)
-    needs: checks
+    needs: [checks, next-version]
     if: ${{ inputs.portable != false }}
     runs-on: ubuntu-latest
 
@@ -285,6 +320,9 @@ jobs:
             package-lock.json
             frontend/package-lock.json
 
+      - name: Stamp release version
+        run: npm version "${{ needs.next-version.outputs.version }}" --no-git-tag-version --allow-same-version
+
       - name: Install dependencies
         run: |
           npm install && npm install --prefix frontend
@@ -303,9 +341,9 @@ jobs:
 # ── Job 6: Bump version, commit, tag, push — only after all builds pass ───────
   version:
     name: Bump version & tag
-    needs: [build-mac, build-win, build-linux, build-portable]
+    needs: [next-version, build-mac, build-win, build-linux, build-portable]
     # Run only when every enabled build job succeeded (not skipped = failed)
-    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    if: ${{ always() && needs.next-version.result == 'success' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     outputs:
       version:  ${{ steps.bump.outputs.version }}
@@ -329,8 +367,9 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          npm version "${{ inputs.bump }}" --no-git-tag-version
-          VERSION=$(node -p "require('./package.json').version")
+          # Same version the builds stamped — recomputing here could drift.
+          VERSION="${{ needs.next-version.outputs.version }}"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
           TAG="v${VERSION}"
 
           git add package.json package-lock.json
