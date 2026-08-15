@@ -17,6 +17,16 @@ name: Release
 # Required secrets (set in this repo's Settings → Secrets):
 #   PRIVATE_REPO_PAT  — fine-grained PAT on mostafa-mansour1/opal
 #                       Permissions: Contents (read & write), Metadata (read)
+#
+# Optional secrets — macOS Developer ID signing + notarization (team YFEE2PMJYC).
+# Without them the mac build still succeeds, unsigned:
+#   MAC_CSC_LINK                 — base64 of the exported Developer ID .p12
+#   MAC_CSC_KEY_PASSWORD         — password used when exporting that .p12
+#   APPLE_ID                     — Apple ID email
+#   APPLE_APP_SPECIFIC_PASSWORD  — app-specific password from appleid.apple.com
+#   APPLE_TEAM_ID                — YFEE2PMJYC
+#
+# Windows is signed locally (scripts/sign-win.sh), not in CI.
 
 on:
   workflow_dispatch:
@@ -132,6 +142,15 @@ jobs:
           restore-keys: electron-builder-mac-${{ matrix.arch }}-
 
       - name: Build
+        # CSC_* are scoped to this step so the Windows job never inherits them.
+        # Absent secrets resolve to empty strings and build-mac.sh falls back to
+        # an unsigned build, so a missing secret degrades instead of failing.
+        env:
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: bash scripts/build-mac.sh --arch ${{ matrix.arch }} --skip-checks
 
       - uses: actions/upload-artifact@v4
