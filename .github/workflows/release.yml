@@ -353,7 +353,10 @@ jobs:
   publish:
     name: Publish release
     needs: [version]
-    if: ${{ needs.version.result == 'success' }}
+    # always() is required: GitHub propagates a skipped job to every descendant
+    # unless the descendant opts out. Without it, unchecking any platform makes
+    # this job skip, so the run tags a version and publishes nothing.
+    if: ${{ always() && needs.version.result == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
