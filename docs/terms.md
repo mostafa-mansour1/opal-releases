@@ -8,9 +8,13 @@ By downloading or using OPAL, you agree to these terms.
 
 ## License
 
+<!-- Hidden while OPAL is free (SHOW_PRICING=false):
 OPAL Pro is sold as a **personal, non-transferable, single-machine license**. One purchase activates OPAL on one machine. You may not resell, sublicense, redistribute, or share your license key with others. For multi-seat or team licensing, contact [contact@opalapi.dev](mailto:contact@opalapi.dev).
 
 The Free tier is available to anyone without purchase and is subject to the same use restrictions.
+-->
+
+OPAL is free to use. You may not resell, sublicense, or redistribute it.
 
 ## What you may do
 
@@ -24,6 +28,7 @@ The Free tier is available to anyone without purchase and is subject to the same
 - Reverse-engineer, decompile, or modify the application binaries
 - Remove or alter any copyright or trademark notices in the software
 
+<!-- Hidden while OPAL is free (SHOW_PRICING=false):
 ## Payment and delivery
 
 OPAL Pro is sold as a **one-time payment of $149 USD** processed via Gumroad. You receive a license key by email immediately after payment. There is no subscription and no recurring charge.
@@ -31,6 +36,7 @@ OPAL Pro is sold as a **one-time payment of $149 USD** processed via Gumroad. Yo
 ## Refunds and license termination
 
 A refund may be requested within 30 days of purchase. See the [Refund Policy](https://opalapi.dev/refund) for details. Upon receiving a refund your license is void, and continued use of OPAL Pro constitutes a violation of these terms. Because OPAL operates offline without server-side license validation, enforcement is on a good-faith basis.
+-->
 
 ## No affiliation with Oracle
 

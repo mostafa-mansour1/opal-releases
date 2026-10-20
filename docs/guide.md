@@ -8,8 +8,12 @@ lastUpdated: "2026-06-08"
 
 OPAL is a desktop application for exploring and testing Oracle Fusion Cloud REST APIs. It ships with 59,000+ endpoints across HCM (Human Capital Management), FSCM (Financials and Supply Chain Management), and BPM (Business Process Management) — indexed locally, no internet connection required for browsing.
 
+<!-- Hidden while OPAL is free (SHOW_PRICING=false):
 **Free tier** gives you the full endpoint catalog, Visual Q Builder, Finder Builder, and Schema viewer.  
 **Pro** adds live requests to your Oracle Fusion instance, the Flow Runner, and export/backup.
+-->
+
+Every feature is free: the full endpoint catalog, Visual Q Builder, Finder Builder, Schema viewer, live requests to your Oracle Fusion instance, the Flow Runner, and export/backup.
 
 ---
 
@@ -17,7 +21,7 @@ OPAL is a desktop application for exploring and testing Oracle Fusion Cloud REST
 
 On first launch, OPAL opens to the endpoint catalog with no setup required. The bundled HCM, FSCM, and BPM specifications are already indexed.
 
-To send live requests (Pro), add a workspace:
+To send live requests, add a workspace:
 
 1. Open **Settings → Workspaces**
 2. Click **Add workspace**
@@ -74,7 +78,7 @@ Every endpoint detail view has a **Schema** tab showing the full request and res
 
 ---
 
-## Live requests (Pro)
+## Live requests
 
 With a workspace and credentials configured:
 
@@ -89,7 +93,7 @@ The response body, status code, and timing appear in the response pane. Switch b
 
 ---
 
-## Flow Runner (Pro)
+## Flow Runner
 
 Flows let you chain multiple API requests in sequence — for example, GET a worker, extract a field from the response, then POST that value to another endpoint.
 
@@ -105,7 +109,7 @@ Each step shows its response inline. Failed steps stop the run and highlight the
 
 ---
 
-## Export and backup (Pro)
+## Export and backup
 
 Under **Settings → Export**, you can export:
 

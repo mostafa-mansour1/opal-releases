@@ -4,6 +4,7 @@ description: "Frequently asked questions about OPAL — pricing, compatibility, 
 lastUpdated: "2026-06-08"
 ---
 
+<!-- Hidden while OPAL is free (SHOW_PRICING=false):
 ## Pricing and purchasing
 
 ### How much does OPAL cost?
@@ -38,6 +39,15 @@ Click **Get Pro · $149** on the homepage. Payment is processed by Gumroad. You 
 Yes — within 30 days of purchase, no questions asked. Email [contact@opalapi.dev](mailto:contact@opalapi.dev) with your order number.
 
 ---
+-->
+
+## Pricing
+
+### Is OPAL free?
+
+Yes. Every feature is free: the full endpoint catalog, Visual Q Builder, Finder Builder, Schema viewer, live requests to your Oracle Fusion instance, the Flow Runner, and export/backup. No account and no license key.
+
+---
 
 ## Compatibility
 
@@ -69,7 +79,7 @@ No. OPAL has no cloud backend. Live requests go directly from your machine to yo
 
 ### Does OPAL work offline?
 
-Yes. The endpoint catalog, Q Builder, and Schema viewer all work without any internet connection after the initial download. An Oracle Fusion connection is only needed for live requests (Pro feature).
+Yes. The endpoint catalog, Q Builder, and Schema viewer all work without any internet connection after the initial download. An Oracle Fusion connection is only needed for live requests.
 
 ---
 
@@ -111,7 +121,7 @@ The portable version is a self-contained ZIP archive that runs on macOS, Windows
 
 ### What is the difference between the installer and the portable version?
 
-The native installer integrates with your operating system — it appears in your Applications folder or Start Menu and can auto-update. The portable version is a plain folder: no system-level changes, no admin rights needed, data stays inside the folder. Both versions have the same features. Free and Pro licenses work in both.
+The native installer integrates with your operating system — it appears in your Applications folder or Start Menu and can auto-update. The portable version is a plain folder: no system-level changes, no admin rights needed, data stays inside the folder. Both versions have the same features.<!-- Hidden while OPAL is free: Free and Pro licenses work in both. -->
 
 ### Does the portable version require installation?
 

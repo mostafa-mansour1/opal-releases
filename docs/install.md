@@ -6,7 +6,8 @@ lastUpdated: "2026-06-08"
 
 ## macOS
 
-1. Download the `.dmg` file from the download link in your Gumroad receipt (or the free download on [opalapi.dev](https://opalapi.dev))
+<!-- Hidden while OPAL is free: 1. Download the `.dmg` file from the download link in your Gumroad receipt (or the free download on [opalapi.dev](https://opalapi.dev)) -->
+1. Download the `.dmg` file from the [download page](/download/)
 2. Open the `.dmg` and drag **OPAL** to your **Applications** folder
 3. Double-click OPAL in Applications to launch
 

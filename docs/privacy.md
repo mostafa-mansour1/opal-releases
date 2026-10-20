@@ -25,7 +25,7 @@ All data OPAL creates stays on your device:
 
 ## When you connect to Oracle Fusion
 
-When you use Pro live request features, OPAL makes API calls directly from your machine to your Oracle Fusion Cloud instance. These requests go machine → Oracle. They do not pass through any OPAL proxy or server.
+When you use live request features, OPAL makes API calls directly from your machine to your Oracle Fusion Cloud instance. These requests go machine → Oracle. They do not pass through any OPAL proxy or server.
 
 ## Contact
 
